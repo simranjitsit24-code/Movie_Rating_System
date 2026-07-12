@@ -1,0 +1,269 @@
+.movie-card {
+  background: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 1px solid transparent;
+  height: 100%;
+}
+
+.movie-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 30px rgba(255, 107, 53, 0.15);
+  border-color: #ff6b35;
+}
+
+.movie-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.movie-card-poster {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+  background: #2a2a2a;
+}
+
+.movie-card-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.movie-card:hover .movie-card-poster img {
+  transform: scale(1.05);
+}
+
+.movie-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.movie-card:hover .movie-card-overlay {
+  opacity: 1;
+}
+
+.play-icon {
+  font-size: 48px;
+  color: #fff;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.movie-card:hover .play-icon {
+  transform: scale(1.2);
+  opacity: 1;
+}
+
+.view-details {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 20px;
+  background: #ff6b35;
+  border-radius: 25px;
+  transition: all 0.3s ease;
+}
+
+.view-details:hover {
+  background: #e55a2b;
+}
+
+.movie-card-rating-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 4px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #f39c12;
+  font-weight: 600;
+  font-size: 14px;
+  backdrop-filter: blur(4px);
+}
+
+.star-icon {
+  font-size: 12px;
+}
+
+.favorite-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid transparent;
+  color: #fff;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 18px;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+.favorite-btn:hover:not(:disabled) {
+  background: rgba(255, 107, 53, 0.8);
+  transform: scale(1.1);
+  border-color: #ff6b35;
+}
+
+.favorite-btn.active {
+  background: #e74c3c;
+  border-color: #e74c3c;
+}
+
+.favorite-btn.active:hover {
+  background: #c0392b;
+  border-color: #c0392b;
+}
+
+.favorite-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.movie-card-info {
+  padding: 16px;
+}
+
+.movie-card-info h4 {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.movie-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #888;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.movie-card-stars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.movie-card-stars .star {
+  font-size: 14px;
+}
+
+.movie-card-stars .star.filled {
+  color: #f39c12;
+}
+
+.movie-card-stars .star.half {
+  color: #f39c12;
+}
+
+.movie-card-stars .star.empty {
+  color: #444;
+}
+
+.review-count {
+  color: #888;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .movie-card-poster {
+    height: 220px;
+  }
+  
+  .favorite-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .movie-card-info h4 {
+    font-size: 14px;
+  }
+  
+  .movie-card-stars .star {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .movie-card-poster {
+    height: 180px;
+  }
+  
+  .movie-card-info {
+    padding: 12px;
+  }
+  
+  .movie-card-info h4 {
+    font-size: 13px;
+  }
+  
+  .view-details {
+    font-size: 12px;
+    padding: 6px 14px;
+  }
+}
+
+/* Loading Skeleton */
+.movie-card.loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.movie-card.loading .movie-card-poster {
+  background: #2a2a2a;
+}
+
+.movie-card.loading .movie-card-info h4,
+.movie-card.loading .movie-card-meta,
+.movie-card.loading .movie-card-stars {
+  background: #2a2a2a;
+  border-radius: 4px;
+  height: 16px;
+  margin-bottom: 8px;
+}
