@@ -5,7 +5,9 @@ A full-stack web application where users can discover, rate, and review movies. 
 ## 🌟 Live Demo
 
 - **Frontend:** https://movie-rating-system-1.onrender.com
-
+  
+## Intern ID
+INTERN ID = CT-3766
 
 ## 📸 Features
 
