@@ -11,7 +11,14 @@ import Profile from './components/Profile';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import './App.css';
+import axios from 'axios';
 
+// Set API URL from environment or fallback
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+axios.defaults.baseURL = API_URL;
+axios.defaults.withCredentials = true;
+
+console.log('🔗 API URL:', API_URL); // ✅ Check this in browser console
 // Private Route Component - Only accessible when logged in
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
