@@ -1,39 +1,71 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext'; // ✅ Correct import
+import { FaSearch, FaFilter } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import MovieCard from './MovieCard';
 import './MovieList.css';
 
-function MovieList() {
-  const { user, isAuthenticated } = useAuth(); 
+function MovieList({ type }) {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    search: '',
-    genre: '',
-    sort: 'recent',
-    year: ''
-  });
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState('');
+  const [sortBy, setSortBy] = useState('recent');
   const [genres, setGenres] = useState([]);
+  const { user, isAuthenticated } = useAuth();
   const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const searchParam = params.get('search') || '';
-    const sortParam = params.get('sort') || 'recent';
+    const search = queryParams.get('search');
+    if (search) setSearchTerm(search);
     
-    setFilters(prev => ({
-      ...prev,
-      search: searchParam,
-      sort: sortParam
-    }));
+    const sort = queryParams.get('sort');
+    if (sort) setSortBy(sort);
     
+    if (type === 'favorites' && isAuthenticated) {
+      fetchFavorites();
+    } else {
+      fetchMovies();
+    }
     fetchGenres();
-  }, [location]);
+  }, [searchTerm, selectedGenre, sortBy, type, isAuthenticated]);
 
-  useEffect(() => {
-    fetchMovies();
-  }, [filters]);
+  const fetchMovies = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const params = new URLSearchParams();
+      if (searchTerm) params.append('search', searchTerm);
+      if (selectedGenre) params.append('genre', selectedGenre);
+      if (sortBy) params.append('sort', sortBy);
+      
+      const response = await axios.get(`/api/movies?${params.toString()}`);
+      setMovies(response.data.movies || []);
+    } catch (error) {
+      console.error('Error fetching movies:', error);
+      setError('Failed to load movies');
+      setMovies([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFavorites = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('/api/user/favorites');
+      setMovies(response.data.favorites || []);
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+      setError('Failed to load favorites');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchGenres = async () => {
     try {
@@ -44,126 +76,121 @@ function MovieList() {
     }
   };
 
-  const fetchMovies = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (filters.search) params.append('search', filters.search);
-      if (filters.genre) params.append('genre', filters.genre);
-      if (filters.sort) params.append('sort', filters.sort);
-      if (filters.year) params.append('year', filters.year);
-      
-      const response = await axios.get(`/api/movies?${params}`);
-      setMovies(response.data.movies || []);
-    } catch (error) {
-      console.error('Error fetching movies:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleFavoriteToggle = (movieId) => {
+    setMovies(prevMovies => 
+      prevMovies.map(movie => 
+        movie._id === movieId 
+          ? { ...movie, isFavorite: !movie.isFavorite }
+          : movie
+      )
+    );
   };
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchMovies();
   };
 
-  const renderStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<FaStar key={`full-${i}`} className="star filled" />);
-    }
-    if (hasHalfStar) {
-      stars.push(<FaStarHalfAlt key="half" className="star half" />);
-    }
-    for (let i = 0; i < 5 - fullStars - (hasHalfStar ? 1 : 0); i++) {
-      stars.push(<FaRegStar key={`empty-${i}`} className="star empty" />);
-    }
-    return stars;
-  };
-
-  if (loading) return <div className="loading">Loading movies...</div>;
+  if (loading) {
+    return (
+      <div className="movie-list-container">
+        <div className="loading-container">
+          <div className="loading-spinner">⏳</div>
+          <p>Loading movies...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="movie-list">
+    <div className="movie-list-container">
       <div className="movie-list-header">
-        <h1>All Movies</h1>
-        <div className="filters">
-          <div className="filter-group">
-            <FaFilter className="filter-icon" />
-            <select 
-              value={filters.genre} 
-              onChange={(e) => handleFilterChange('genre', e.target.value)}
-            >
-              <option value="">All Genres</option>
-              {genres.map(g => (
-                <option key={g._id} value={g._id}>{g._id} ({g.count})</option>
-              ))}
-            </select>
-          </div>
+        <h1>
+          {type === 'favorites' ? '❤️ My Favorites' : '🎬 Movies'}
+        </h1>
+        <p>
+          {type === 'favorites' 
+            ? `${movies.length} movies in your favorites`
+            : `Discover and rate movies from our collection (${movies.length} movies)`}
+        </p>
+      </div>
 
-          <div className="filter-group">
+      {type !== 'favorites' && (
+        <div className="movie-list-controls">
+          <form onSubmit={handleSearch} className="search-form">
+            <input
+              type="text"
+              placeholder="Search movies..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            <button type="submit" className="search-btn">
+              <FaSearch /> Search
+            </button>
+          </form>
+
+          <div className="filter-controls">
+            <div className="filter-group">
+              <FaFilter className="filter-icon" />
+              <select 
+                value={selectedGenre} 
+                onChange={(e) => setSelectedGenre(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">All Genres</option>
+                {genres.map(genre => (
+                  <option key={genre._id} value={genre._id}>
+                    {genre._id} ({genre.count})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <select 
-              value={filters.sort} 
-              onChange={(e) => handleFilterChange('sort', e.target.value)}
+              value={sortBy} 
+              onChange={(e) => setSortBy(e.target.value)}
+              className="sort-select"
             >
               <option value="recent">Most Recent</option>
-              <option value="rating">Top Rated</option>
+              <option value="rating">Highest Rated</option>
               <option value="popular">Most Popular</option>
               <option value="oldest">Oldest</option>
             </select>
           </div>
-
-          <div className="filter-group">
-            <input
-              type="number"
-              placeholder="Year"
-              value={filters.year}
-              onChange={(e) => handleFilterChange('year', e.target.value)}
-              min="1900"
-              max="2024"
-            />
-          </div>
         </div>
-      </div>
+      )}
 
-      {movies.length === 0 ? (
-        <div className="no-movies">No movies found</div>
-      ) : (
+      {error && <div className="error-message">{error}</div>}
+
+      {movies.length > 0 ? (
         <div className="movie-grid">
           {movies.map(movie => (
-            <MovieCard key={movie._id} movie={movie} renderStars={renderStars} />
+            <MovieCard 
+              key={movie._id} 
+              movie={movie} 
+              onFavoriteToggle={handleFavoriteToggle}
+            />
           ))}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <div className="empty-icon">
+            {type === 'favorites' ? '❤️' : '🎬'}
+          </div>
+          <h3>
+            {type === 'favorites' 
+              ? 'No favorites yet' 
+              : 'No movies found'}
+          </h3>
+          <p>
+            {type === 'favorites' 
+              ? 'Start adding movies to your favorites by clicking the heart icon' 
+              : 'Try adjusting your search or filter criteria'}
+          </p>
         </div>
       )}
     </div>
-  );
-}
-
-function MovieCard({ movie, renderStars }) {
-  return (
-    <Link to={`/movies/${movie._id}`} className="movie-card">
-      <div className="movie-card-poster">
-        <img src={movie.poster} alt={movie.title} />
-        <div className="movie-card-rating-badge">
-          <FaStar className="star-icon" />
-          <span>{movie.rating?.toFixed(1) || 0}</span>
-        </div>
-      </div>
-      <div className="movie-card-info">
-        <h4>{movie.title}</h4>
-        <div className="movie-card-meta">
-          <span>{movie.releaseYear}</span>
-          <span>{movie.genre?.[0]}</span>
-          <span>{movie.duration}m</span>
-        </div>
-        <div className="movie-card-stars">
-          {renderStars(movie.rating || 0)}
-          <span className="review-count">({movie.totalReviews})</span>
-        </div>
-      </div>
-    </Link>
   );
 }
 
