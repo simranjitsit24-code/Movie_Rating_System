@@ -3,34 +3,39 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 
-// ============ CORS ============
+// ============ CORS CONFIGURATION (FIXED) ============
+// Define allowed origins
 const allowedOrigins = [
-  'https://movie-rating-frontend.onrender.com',
-  'https://movie-rating-backend.onrender.com',
+  'https://movie-rating-system-1.onrender.com',
+  'https://movie-rating-system-hsuz.onrender.com',
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:3000'
 ];
 
+// Use only ONE CORS configuration - either this or the manual one below
 app.use(cors({
   origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
-      console.log('Blocked origin:', origin);
+      console.log('❌ Blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
+// Parse JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -75,19 +80,17 @@ const Review = mongoose.model('Review', ReviewSchema);
 // ============ MONGODB CONNECTION ============
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/movie_rating';
 
-// Connection options for production
 const connectDB = async () => {
   try {
     await mongoose.connect(MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
-      family: 4 // Use IPv4, skip trying IPv6
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      family: 4
     });
     console.log('✅ MongoDB Connected Successfully');
     
-    // Check if movies exist, if not seed them
     const count = await Movie.countDocuments();
     if (count === 0) {
       await seedMovies();
@@ -225,7 +228,7 @@ app.post('/api/auth/register', async (req, res) => {
     const user = new User({ 
       name, 
       email: email.toLowerCase(), 
-      password // For development - use bcrypt in production
+      password
     });
     await user.save();
 
@@ -238,7 +241,8 @@ app.post('/api/auth/register', async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=ff6b35&color=fff&size=100`
       }
     });
   } catch (error) {
@@ -269,7 +273,8 @@ app.post('/api/auth/login', async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=ff6b35&color=fff&size=100`
       }
     });
   } catch (error) {
@@ -292,7 +297,16 @@ app.get('/api/auth/me', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user });
+    res.json({ 
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=ff6b35&color=fff&size=100`,
+        bio: user.bio || ''
+      }
+    });
   } catch (error) {
     console.error('Auth Error:', error);
     res.status(500).json({ error: error.message });
@@ -311,9 +325,11 @@ app.get('/api/movies', async (req, res) => {
     let sortOption = {};
     if (sort === 'rating') sortOption = { rating: -1 };
     else if (sort === 'recent') sortOption = { createdAt: -1 };
+    else if (sort === 'oldest') sortOption = { createdAt: 1 };
     else sortOption = { title: 1 };
 
     const movies = await Movie.find(query).sort(sortOption);
+    console.log('📊 Movies found:', movies.length);
     res.json({ movies });
   } catch (error) {
     console.error('Movies Error:', error);
