@@ -18,26 +18,38 @@ function Home() {
   }, []);
 
   const fetchMovies = async () => {
-    try {
-      const response = await axios.get('/api/movies');
-      const allMovies = response.data.movies || [];
-      setMovies(allMovies);
-      
-      // Top rated movies
-      const top = [...allMovies].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 6);
-      setTopRated(top);
-      
-      // Latest movies
-      const latest = [...allMovies].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
-      setLatestMovies(latest);
-      
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching movies:', error);
-      setError('Failed to load movies');
-      setLoading(false);
-    }
-  };
+  try {
+    console.log('📡 Fetching movies...');
+    console.log('📡 Base URL:', axios.defaults.baseURL);
+    
+    // Use full URL
+    const response = await axios.get(`${axios.defaults.baseURL}/api/movies`);
+    // OR simply:
+    // const response = await axios.get('/api/movies');
+    
+    console.log('✅ Movies response:', response.data);
+    const allMovies = response.data.movies || [];
+    setMovies(allMovies);
+    
+    const top = [...allMovies].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 6);
+    setTopRated(top);
+    
+    const latest = [...allMovies].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
+    setLatestMovies(latest);
+    
+    setLoading(false);
+  } catch (error) {
+    console.error('❌ Error fetching movies:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      config: error.config
+    });
+    setError('Failed to load movies');
+    setLoading(false);
+  }
+};
 
   const renderStars = (rating) => {
     const stars = [];
