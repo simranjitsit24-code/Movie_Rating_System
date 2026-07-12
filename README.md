@@ -5,8 +5,7 @@ A full-stack web application where users can discover, rate, and review movies. 
 ## 🌟 Live Demo
 
 - **Frontend:** https://movie-rating-system-1.onrender.com
-- **Backend API:** https://movie-rating-system-hsuz.onrender.com
-- **API Health Check:** https://movie-rating-system-hsuz.onrender.com/health
+
 
 ## 📸 Features
 
