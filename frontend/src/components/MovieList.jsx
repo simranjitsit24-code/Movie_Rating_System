@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { FaStar, FaStarHalfAlt, FaRegStar, FaFilter } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext'; // ✅ Correct import
+import MovieCard from './MovieCard';
 import './MovieList.css';
 
 function MovieList() {
+  const { user, isAuthenticated } = useAuth(); 
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
