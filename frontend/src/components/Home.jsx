@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { FaStar, FaStarHalfAlt, FaRegStar, FaPlay } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext'; // ✅ Correct import
+import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
 import './Home.css';
 
 function Home() {
+  const { user, isAuthenticated } = useAuth();
   const [topRated, setTopRated] = useState([]);
   const [latestMovies, setLatestMovies] = useState([]);
   const [loading, setLoading] = useState(true);
