@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import axios from 'axios';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Home from './components/Home';
@@ -11,15 +12,38 @@ import Profile from './components/Profile';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import './App.css';
-import axios from 'axios';
 
-// Set API URL from environment or fallback
+// ✅ IMPORTANT: Set API URL
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 axios.defaults.baseURL = API_URL;
 axios.defaults.withCredentials = true;
 
-console.log('🔗 API URL:', API_URL); // ✅ Check this in browser console
-// Private Route Component - Only accessible when logged in
+console.log('🔗 API URL:', API_URL);
+
+// Add request interceptor for debugging
+axios.interceptors.request.use(
+  (config) => {
+    console.log('📤 Request:', config.method.toUpperCase(), config.url);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for debugging
+axios.interceptors.response.use(
+  (response) => {
+    console.log('📥 Response:', response.status, response.config.url);
+    return response;
+  },
+  (error) => {
+    console.error('❌ Response Error:', error.response?.status, error.response?.data);
+    return Promise.reject(error);
+  }
+);
+
+// ... rest of your App.jsx code
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
